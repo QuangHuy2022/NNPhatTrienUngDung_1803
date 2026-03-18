@@ -3,7 +3,7 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
-let mongoose = require('mongoose')
+const sequelize = require('./utils/db');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
@@ -29,16 +29,13 @@ app.use('/api/v1/categories', require('./routes/categories'))
 app.use('/api/v1/auth', require('./routes/auth'))
 
 
-mongoose.connect('mongodb://localhost:27017/NNPTUD-C4');
-mongoose.connection.on('connected', function () {
-  console.log("connected");
-})
-mongoose.connection.on('disconnected', function () {
-  console.log("disconnected");
-})
-mongoose.connection.on('disconnecting', function () {
-  console.log("disconnecting");
-})
+sequelize.authenticate()
+    .then(() => {
+        console.log('Connection has been established successfully.');
+    })
+    .catch(err => {
+        console.error('Unable to connect to the database:', err);
+    });
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
   next(createError(404));

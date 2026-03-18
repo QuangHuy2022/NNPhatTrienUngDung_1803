@@ -1,75 +1,67 @@
-const mongoose = require("mongoose");
-let bcrypt = require('bcrypt')
 
-const userSchema = new mongoose.Schema(
-  {
+const { DataTypes } = require('sequelize');
+const sequelize = require('../utils/db');
+const Role = require('./roles');
+
+const User = sequelize.define('user', {
     username: {
-      type: String,
-      required: [true, "Username is required"],
-      unique: true
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true
     },
-
     password: {
-      type: String,
-      required: [true, "Password is required"]
+        type: DataTypes.STRING,
+        allowNull: false
     },
-
     email: {
-      type: String,
-      required: [true, "Email is required"],
-      unique: true,
-      lowercase: true
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true,
+        validate: {
+            isEmail: true
+        }
     },
-
     fullName: {
-      type: String,
-      default: ""
+        type: DataTypes.STRING,
+        defaultValue: ''
     },
-
     avatarUrl: {
-      type: String,
-      default: "https://i.sstatic.net/l60Hf.png"
+        type: DataTypes.STRING,
+        defaultValue: 'https://i.sstatic.net/l60Hf.png'
     },
-
     status: {
-      type: Boolean,
-      default: false
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
     },
-
-    role: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "role",
-      required: true
-    },
-
     loginCount: {
-      type: Number,
-      default: 0,
-      min: [0, "Login count cannot be negative"]
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+        validate: {
+            min: 0
+        }
     },
     isDeleted: {
-      type: Boolean,
-      default: false
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
     },
-    lockTime: Date
-  },
-  {
-    timestamps: true
-  }
-);
-userSchema.pre('save', function () {
-  if (this.isModified('password')) {
-    let salt = bcrypt.genSaltSync(10);
-    this.password = bcrypt.hashSync(this.password, salt)
-  }
-})
-userSchema.pre('findOneAndUpdate', function () {
-  if (this._update.password) {
-    let salt = bcrypt.genSaltSync(10);
-    console.log(this);
-    this._update.password = bcrypt.hashSync(this._update.password, salt)
-  }
-})
+    lockTime: {
+        type: DataTypes.DATE
+    }
+});
 
+User.belongsTo(Role);
+Role.hasMany(User);
 
-module.exports = mongoose.model("user", userSchema);
+User.beforeCreate(async (user, options) => {
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(user.password, salt);
+});
+
+User.beforeUpdate(async (user, options) => {
+    if (user.changed('password')) {
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(user.password, salt);
+    }
+});
+
+module.exports = User;
