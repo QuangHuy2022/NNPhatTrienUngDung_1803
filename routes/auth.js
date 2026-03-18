@@ -1,9 +1,10 @@
 let express = require('express');
-let router = express.Router()
-let userController = require('../controllers/users')
+let router = express.Router();
+let userController = require('../controllers/users');
 let bcrypt = require('bcrypt');
 const { CheckLogin } = require('../utils/authHandler');
-let jwt = require('jsonwebtoken')
+let jwt = require('jsonwebtoken');
+const fs = require('fs'); // <--- THÊM DÒNG NÀY
 router.post('/register', async function (req, res, next) {
     try {
         let { username, password, email } = req.body;
