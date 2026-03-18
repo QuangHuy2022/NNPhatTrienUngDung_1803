@@ -1,35 +1,37 @@
-let userController = require('../controllers/users')
-let jwt = require('jsonwebtoken')
+let userController = require('../controllers/users');
+let jwt = require('jsonwebtoken');
+const fs = require('fs');
+
 module.exports = {
     CheckLogin: async function (req, res, next) {
+        const authHeader = req.headers.authorization;
+
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ message: 'Yêu cầu xác thực không hợp lệ. Vui lòng cung cấp token theo định dạng \'Bearer <token>\'.' });
+        }
+
+        const token = authHeader.split(' ')[1];
+
         try {
-            let token = req.headers.authorization;
-            if (!token) {
-                res.status(404).send({
-                    message: "ban chua dang nhap"
-                })
-                return;
-            }
-            let result = jwt.verify(token, "secret")
-            if (result.exp * 1000 < Date.now()) {
-                res.status(404).send({
-                    message: "ban chua dang nhap"
-                })
-                return;
-            }
-            let user = await userController.GetAnUserById(result.id);
+            const pubK = fs.readFileSync('publicKey.pem');
+            const decoded = jwt.verify(token, pubK, { algorithms: ['RS256'] });
+
+            const user = await userController.GetAnUserById(decoded.id);
+
             if (!user) {
-                res.status(404).send({
-                    message: "ban chua dang nhap"
-                })
-                return;
+                return res.status(401).json({ message: 'Xác thực thất bại. Người dùng không tồn tại.' });
             }
+
             req.user = user;
-            next()
+            next();
         } catch (error) {
-            res.status(404).send({
-                message: "ban chua dang nhap"
-            })
+            if (error instanceof jwt.TokenExpiredError) {
+                return res.status(401).json({ message: 'Xác thực thất bại. Token đã hết hạn.' });
+            }
+            if (error instanceof jwt.JsonWebTokenError) {
+                return res.status(401).json({ message: 'Xác thực thất bại. Token không hợp lệ.' });
+            }
+            return next(error); // Chuyển các lỗi khác đến error handler chung
         }
     }
-}
+};
