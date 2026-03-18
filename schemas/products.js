@@ -1,38 +1,22 @@
-let mongoose = require('mongoose');
-let productsSchema = mongoose.Schema({
 
-    title: {
-        type: String,
-        required: [true, "title khong duoic rong"],
-        unique: true
-    }, slug: {
-        type: String,
-        required: [true, "slug khong duoic rong"],
-        unique: true
+const { DataTypes } = require('sequelize');
+const sequelize = require('../utils/db');
+const Category = require('./categories');
+
+const Product = sequelize.define('product', {
+    name: {
+        type: DataTypes.STRING,
+        allowNull: false
     },
     price: {
-        type: Number,
-        required: true,
-        min: 0
-    },
-    description: {
-        type: String,
-        default: ""
-    },
-    images: {
-        type: [String],
-        default: ["https://i.imgur.com/R3iobJA.jpeg"]
-    },
-    category: {
-        type: mongoose.Types.ObjectId,
-        ref: 'category',
-        required: true
-    },
-    isDeleted:{
-        type:Boolean,
-        default:false
+        type: DataTypes.FLOAT,
+        allowNull: false,
+        defaultValue: 0
     }
-}, {
-    timestamps: true
-})
-module.exports = new mongoose.model('product', productsSchema)
+});
+
+// Thiết lập mối quan hệ
+Category.hasMany(Product);
+Product.belongsTo(Category);
+
+module.exports = Product;
