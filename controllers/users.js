@@ -1,29 +1,32 @@
-let userModel = require('../schemas/users')
+const User = require('../schemas/users');
+
 module.exports = {
-    CreateAnUser: async function (username, password, email, role,
-        fullName, avatarUrl, status, loginCount) {
-        let newItem = new userModel({
+    CreateAnUser: async function (username, password, email, roleId, fullName, avatarUrl, status, loginCount) {
+        return await User.create({
             username: username,
             password: password,
             email: email,
             fullName: fullName,
             avatarUrl: avatarUrl,
             status: status,
-            role: role,
+            roleId: roleId, // Make sure roleId is passed
             loginCount: loginCount
         });
-        await newItem.save();
-        return newItem;
     },
     GetAnUserByUsername: async function (username) {
-        return await userModel.findOne({
-            isDeleted: false,
-            username: username
-        })
-    }, GetAnUserById: async function (id) {
-        return await userModel.findOne({
-            isDeleted: false,
-            _id: id
-        })
+        return await User.findOne({
+            where: {
+                isDeleted: false,
+                username: username
+            }
+        });
+    },
+    GetAnUserById: async function (id) {
+        return await User.findOne({
+            where: {
+                isDeleted: false,
+                id: id
+            }
+        });
     }
-}
+};

@@ -37,12 +37,11 @@ router.post('/login', async function (req, res, next) {
         if (bcrypt.compareSync(password, user.password)) {
             user.loginCount = 0;
             await user.save()
-            //let priK = fs.readFileSync('privateKey.pem')
-            let token = jwt.sign({
-                id: user._id
-            }, 'secret', {
-                expiresIn: '1d'
-            })
+            const priK = fs.readFileSync('privateKey.pem');
+            const token = jwt.sign({ id: user.id }, priK, {
+                algorithm: 'RS256',
+                expiresIn: '1d' // Token hết hạn sau 1 ngày
+            });
             res.send(token)
         } else {
             user.loginCount++;
