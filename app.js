@@ -45,11 +45,21 @@ app.use(function (req, res, next) {
 
 // error handler
 app.use(function (err, req, res, next) {
-  // set locals, only providing error in development
+  // If the request is for an API endpoint, send a JSON response
+  if (req.originalUrl.startsWith('/api/')) {
+    return res.status(err.status || 500).json({
+      error: {
+        message: err.message,
+        // Provide stack trace in development environment
+        stack: req.app.get('env') === 'development' ? err.stack : undefined
+      }
+    });
+  }
+
+  // Otherwise, render the HTML error page
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
 
-  // render the error page
   res.status(err.status || 500);
   res.render('error');
 });
